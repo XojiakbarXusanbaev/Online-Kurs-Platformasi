@@ -1,31 +1,31 @@
 {% extends "admin/layout.html" %}
 
-{% block title %}Курсы{% endblock %}
+{% block title %}Kurslar{% endblock %}
 {% block courses_active %}active{% endblock %}
-{% block header_title %}Курсы{% endblock %}
+{% block header_title %}Kurslar{% endblock %}
 
 {% block content %}
 <div class="text-right mb-20">
     <button class="btn btn-primary" onclick="showAddCourseForm()">
-        <i class="fas fa-plus"></i> Добавить курс
+        <i class="fas fa-plus"></i> Kurs qo'shish
     </button>
 </div>
 
 <div id="addCourseForm" class="form-container hidden">
-    <div class="form-title">Добавить курс</div>
+    <div class="form-title"><i class="fas fa-book"></i> Kurs qo'shish</div>
     <form id="courseForm">
         <div class="form-row">
             <div class="form-col">
                 <div class="form-group">
-                    <label for="title">Название курса</label>
-                    <input type="text" id="title" name="title" required>
+                    <label for="title">Kurs nomi</label>
+                    <input type="text" id="title" name="title" class="form-control" required>
                 </div>
             </div>
             <div class="form-col">
                 <div class="form-group">
-                    <label for="author">Автор</label>
-                    <select id="author" name="author_id" required>
-                        <option value="">Выберите автора</option>
+                    <label for="author">Muallif</label>
+                    <select id="author" name="author_id" class="form-control" required>
+                        <option value="">Muallifni tanlang</option>
                         {% for author in authors %}
                         <option value="{{ author.id }}">{{ author.full_name }}</option>
                         {% endfor %}
@@ -35,34 +35,37 @@
         </div>
         
         <div class="form-group">
-            <label for="description">Описание</label>
-            <textarea id="description" name="description" required></textarea>
+            <label for="description">Tavsif</label>
+            <textarea id="description" name="description" class="form-control" required></textarea>
         </div>
         
         <div class="form-actions">
-            <button type="button" class="btn btn-cancel" onclick="hideAddCourseForm()">Отмена</button>
-            <button type="submit" class="btn btn-primary">Сохранить</button>
+            <button type="button" class="btn btn-cancel" onclick="hideAddCourseForm()">Bekor qilish</button>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Saqlash</button>
         </div>
     </form>
 </div>
 
 <div class="table-container">
     <div class="table-header">
-        <div class="table-title">Список курсов</div>
-        <div class="table-filters">
-            <input type="text" placeholder="Поиск..." id="courseSearch">
+        <div class="table-title"><i class="fas fa-book"></i> Kurslar ro'yxati</div>
+        <div class="table-actions-container">
+            <div class="table-search">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Qidirish..." id="courseSearch">
+            </div>
         </div>
     </div>
     <table class="table" id="coursesTable">
         <thead>
             <tr>
                 <th>ID</th>
-                <th>Название</th>
-                <th>Автор</th>
-                <th>Студентов</th>
-                <th>Уроков</th>
-                <th>Рейтинг</th>
-                <th>Действия</th>
+                <th>Kurs nomi</th>
+                <th>Muallif</th>
+                <th>Talabalar</th>
+                <th>Darslar</th>
+                <th>Reyting</th>
+                <th>Amallar</th>
             </tr>
         </thead>
         <tbody>
@@ -75,13 +78,13 @@
                 <td>{{ course.lessons_count }}</td>
                 <td>{{ course.average_rating }}</td>
                 <td class="table-actions">
-                    <button class="btn btn-sm btn-primary view-lessons" data-id="{{ course.id }}">
+                    <button class="btn btn-sm btn-primary view-lessons" data-id="{{ course.id }}" title="Darslarni ko'rish">
                         <i class="fas fa-video"></i>
                     </button>
-                    <button class="btn btn-sm btn-edit edit-course" data-id="{{ course.id }}">
+                    <button class="btn btn-sm btn-edit edit-course" data-id="{{ course.id }}" title="Tahrirlash">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn btn-sm btn-delete delete-course" data-id="{{ course.id }}">
+                    <button class="btn btn-sm btn-delete delete-course" data-id="{{ course.id }}" title="O'chirish">
                         <i class="fas fa-trash"></i>
                     </button>
                 </td>
@@ -109,23 +112,23 @@
 {% block extra_js %}
 <script src="/static/admin/js/courses.js"></script>
 <script>
-    // Привязываем обработчики событий к кнопкам без использования inline onclick
+    // Tugmalar uchun event tinglovchilari
     document.addEventListener('DOMContentLoaded', function() {
-        // Просмотр уроков курса
+        // Kurs darslarini ko'rish
         document.querySelectorAll('.view-lessons').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 viewLessons(this.getAttribute('data-id'));
             });
         });
         
-        // Редактирование курса
+        // Kursni tahrirlash
         document.querySelectorAll('.edit-course').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 editCourse(this.getAttribute('data-id'));
             });
         });
         
-        // Удаление курса
+        // Kursni o'chirish
         document.querySelectorAll('.delete-course').forEach(function(btn) {
             btn.addEventListener('click', function() {
                 deleteCourse(this.getAttribute('data-id'));

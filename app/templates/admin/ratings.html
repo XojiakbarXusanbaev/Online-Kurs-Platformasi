@@ -7,22 +7,28 @@
 {% block content %}
 <div class="table-container">
     <div class="table-header">
-        <div class="table-title">Baholashlar ro'yxati</div>
-        <div class="table-filters">
-            <select id="lessonFilter" onchange="filterRatings()">
-                <option value="">Barcha darslar</option>
-                {% for lesson in lessons %}
-                <option value="{{ lesson.id }}">{{ lesson.title }} ({{ lesson.course.title }})</option>
-                {% endfor %}
-            </select>
-            <select id="ratingFilter" onchange="filterRatings()">
-                <option value="">Barcha baholashlar</option>
-                <option value="5">5 yulduz</option>
-                <option value="4">4 yulduz</option>
-                <option value="3">3 yulduz</option>
-                <option value="2">2 yulduz</option>
-                <option value="1">1 yulduz</option>
-            </select>
+        <div class="table-title"><i class="fas fa-star"></i> Baholashlar ro'yxati</div>
+        <div class="table-actions-container">
+            <div class="table-filter">
+                <select id="lessonFilter" class="form-control">
+                    <option value="">Barcha darslar</option>
+                    {% for lesson in lessons %}
+                    <option value="{{ lesson.id }}">{{ lesson.title }} ({{ lesson.course.title }})</option>
+                    {% endfor %}
+                </select>
+                <i class="fas fa-book"></i>
+            </div>
+            <div class="table-filter">
+                <select id="ratingFilter" class="form-control">
+                    <option value="">Barcha baholashlar</option>
+                    <option value="5">5 yulduz</option>
+                    <option value="4">4 yulduz</option>
+                    <option value="3">3 yulduz</option>
+                    <option value="2">2 yulduz</option>
+                    <option value="1">1 yulduz</option>
+                </select>
+                <i class="fas fa-filter"></i>
+            </div>
         </div>
     </div>
     <table class="table" id="ratingsTable">
@@ -51,10 +57,10 @@
                     </div>
                 </td>
                 <td class="table-actions">
-                    <button class="btn btn-sm btn-edit" onclick="editRating({{ rating.id }})">
+                    <button class="btn btn-sm btn-edit edit-rating" data-id="{{ rating.id }}" title="Tahrirlash">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn btn-sm btn-delete" onclick="deleteRating({{ rating.id }})">
+                    <button class="btn btn-sm btn-delete delete-rating" data-id="{{ rating.id }}" title="O'chirish">
                         <i class="fas fa-trash"></i>
                     </button>
                 </td>
@@ -64,21 +70,27 @@
     </table>
     
     <div class="pagination">
-        {% for i in range(1, total_pages + 1) %}
-        <div class="pagination-item {% if i == current_page %}active{% endif %}" onclick="goToPage({{ i }})">
-            {{ i }}
-        </div>
+        {% if current_page > 1 %}
+        <a href="?page={{ current_page - 1 }}" class="pagination-item"><i class="fas fa-chevron-left"></i> Oldingi</a>
+        {% endif %}
+        
+        {% for p in range(1, total_pages + 1) %}
+        <a href="?page={{ p }}" class="pagination-item {% if p == current_page %}active{% endif %}">{{ p }}</a>
         {% endfor %}
+        
+        {% if current_page < total_pages %}
+        <a href="?page={{ current_page + 1 }}" class="pagination-item">Keyingi <i class="fas fa-chevron-right"></i></a>
+        {% endif %}
     </div>
 </div>
 
 <div id="editRatingForm" class="form-container hidden">
-    <div class="form-title">Bahoni tahrirlash</div>
+    <div class="form-title"><i class="fas fa-star"></i> Bahoni tahrirlash</div>
     <form id="ratingForm">
         <input type="hidden" id="ratingId" name="id">
         <div class="form-group">
             <label for="stars">Baho</label>
-            <select id="stars" name="stars" required>
+            <select id="stars" name="stars" class="form-control" required>
                 <option value="5">5 yulduz</option>
                 <option value="4">4 yulduz</option>
                 <option value="3">3 yulduz</option>
@@ -87,9 +99,22 @@
             </select>
         </div>
         
+        <div class="star-rating-preview">
+            <div class="form-group">
+                <label>Ko'rinishi:</label>
+                <div class="stars-container preview-stars">
+                    <i class="fas fa-star filled"></i>
+                    <i class="fas fa-star filled"></i>
+                    <i class="fas fa-star filled"></i>
+                    <i class="fas fa-star filled"></i>
+                    <i class="fas fa-star filled"></i>
+                </div>
+            </div>
+        </div>
+        
         <div class="form-actions">
-            <button type="button" class="btn btn-cancel" onclick="hideEditRatingForm()">Bekor qilish</button>
-            <button type="submit" class="btn btn-primary">Saqlash</button>
+            <button type="button" class="btn btn-cancel" id="cancelRatingBtn">Bekor qilish</button>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Saqlash</button>
         </div>
     </form>
 </div>
@@ -103,13 +128,95 @@
 .fas.fa-star {
     color: #ddd;
     margin-right: 2px;
+    transition: all 0.2s ease;
 }
 .fas.fa-star.filled {
     color: #ffc107;
+}
+
+.star-rating-preview {
+    margin: 20px 0;
+    padding: 15px;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+}
+
+.preview-stars .fas.fa-star {
+    font-size: 24px;
+    margin-right: 5px;
+}
+
+/* Анимация при наведении на звезды */
+.stars-container:hover .fas.fa-star {
+    transform: scale(1.1);
+}
+
+.stars-container:hover .fas.fa-star.filled {
+    color: #ffaa00;
 }
 </style>
 {% endblock %}
 
 {% block extra_js %}
 <script src="/static/admin/js/ratings.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Обновление превью звезд при изменении выбора
+        const starsSelect = document.getElementById('stars');
+        const previewStars = document.querySelectorAll('.preview-stars .fas.fa-star');
+        
+        if (starsSelect && previewStars.length) {
+            starsSelect.addEventListener('change', function() {
+                const rating = parseInt(this.value);
+                previewStars.forEach((star, index) => {
+                    if (index < rating) {
+                        star.classList.add('filled');
+                    } else {
+                        star.classList.remove('filled');
+                    }
+                });
+            });
+            
+            // Обработчик для кнопки отмены
+            const cancelBtn = document.getElementById('cancelRatingBtn');
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', function() {
+                    hideEditRatingForm();
+                });
+            }
+        }
+        
+        // Обработчики событий для кнопок рейтингов
+        document.querySelectorAll('.edit-rating').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const id = this.getAttribute('data-id');
+                editRating(id);
+            });
+        });
+        
+        document.querySelectorAll('.delete-rating').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const id = this.getAttribute('data-id');
+                deleteRating(id);
+            });
+        });
+        
+        // Обработчики для фильтров
+        const lessonFilter = document.getElementById('lessonFilter');
+        const ratingFilter = document.getElementById('ratingFilter');
+        
+        if (lessonFilter) {
+            lessonFilter.addEventListener('change', function() {
+                filterRatings();
+            });
+        }
+        
+        if (ratingFilter) {
+            ratingFilter.addEventListener('change', function() {
+                filterRatings();
+            });
+        }
+    });
+</script>
 {% endblock %}

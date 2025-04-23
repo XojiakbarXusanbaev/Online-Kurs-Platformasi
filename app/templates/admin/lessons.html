@@ -6,25 +6,25 @@
 
 {% block content %}
 <div class="text-right mb-20">
-    <button class="btn btn-primary" onclick="showAddLessonForm()">
+    <button class="btn btn-primary" id="addLessonBtn">
         <i class="fas fa-plus"></i> Dars qo'shish
     </button>
 </div>
 
 <div id="addLessonForm" class="form-container hidden">
-    <div class="form-title">Dars qo'shish</div>
+    <div class="form-title"><i class="fas fa-graduation-cap"></i> Dars qo'shish</div>
     <form id="lessonForm">
         <div class="form-row">
             <div class="form-col">
                 <div class="form-group">
                     <label for="title">Dars nomi</label>
-                    <input type="text" id="title" name="title" required>
+                    <input type="text" id="title" name="title" class="form-control" required>
                 </div>
             </div>
             <div class="form-col">
                 <div class="form-group">
                     <label for="course">Kurs</label>
-                    <select id="course" name="course_id" required>
+                    <select id="course" name="course_id" class="form-control" required>
                         <option value="">Kursni tanlang</option>
                         {% for course in courses %}
                         <option value="{{ course.id }}">{{ course.title }}</option>
@@ -36,41 +36,70 @@
         
         <div class="form-group">
             <label for="videoUrl">Video URL</label>
-            <input type="url" id="videoUrl" name="video_url" required>
+            <input type="url" id="videoUrl" name="video_url" class="form-control" placeholder="https://www.youtube.com/embed/videoID" required>
         </div>
         
         <div class="form-row">
             <div class="form-col">
                 <div class="form-group">
                     <label for="order">Tartib raqami</label>
-                    <input type="number" id="order" name="order" min="1" value="1">
+                    <input type="number" id="order" name="order" min="1" value="1" class="form-control">
                 </div>
             </div>
         </div>
         
         <div class="form-group">
             <label for="content">Dars mazmuni</label>
-            <textarea id="content" name="content" required></textarea>
+            <textarea id="content" name="content" class="form-control" rows="6" required></textarea>
         </div>
         
         <div class="form-actions">
-            <button type="button" class="btn btn-cancel" onclick="hideAddLessonForm()">Bekor qilish</button>
-            <button type="submit" class="btn btn-primary">Saqlash</button>
+            <button type="button" class="btn btn-cancel" id="cancelBtn">Bekor qilish</button>
+            <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Saqlash</button>
         </div>
     </form>
 </div>
 
+<div id="viewLessonModal" class="modal">
+    <div class="modal-content modal-content-large">
+        <div class="modal-header">
+            <h2 id="viewLessonTitle"></h2>
+            <span class="close" id="closeViewModal">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div class="lesson-info">
+                <p><strong>Kurs:</strong> <span id="viewLessonCourse"></span></p>
+                <p><strong>Tartib raqami:</strong> <span id="viewLessonOrder"></span></p>
+                <p><strong>Davomiyligi:</strong> <span id="viewLessonDuration"></span> min</p>
+            </div>
+            <div class="lesson-video" id="viewLessonVideoContainer">
+                <iframe id="viewLessonVideo" width="100%" height="315" src="" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+            <div class="lesson-content">
+                <h3>Dars mazmuni</h3>
+                <div id="viewLessonContent"></div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="table-container">
     <div class="table-header">
-        <div class="table-title">Darslar ro'yxati</div>
-        <div class="table-filters">
-            <select id="courseFilter" onchange="filterLessons()">
-                <option value="">Barcha kurslar</option>
-                {% for course in courses %}
-                <option value="{{ course.id }}">{{ course.title }}</option>
-                {% endfor %}
-            </select>
-            <input type="text" placeholder="Qidirish..." id="lessonSearch">
+        <div class="table-title"><i class="fas fa-graduation-cap"></i> Darslar ro'yxati</div>
+        <div class="table-actions-container">
+            <div class="table-filter">
+                <select id="courseFilter" class="form-control">
+                    <option value="">Barcha kurslar</option>
+                    {% for course in courses %}
+                    <option value="{{ course.id }}">{{ course.title }}</option>
+                    {% endfor %}
+                </select>
+                <i class="fas fa-filter"></i>
+            </div>
+            <div class="table-search">
+                <i class="fas fa-search"></i>
+                <input type="text" placeholder="Qidirish..." id="lessonSearch">
+            </div>
         </div>
     </div>
     <table class="table" id="lessonsTable">
@@ -79,9 +108,10 @@
                 <th>ID</th>
                 <th>Nomi</th>
                 <th>Kurs</th>
-                <th>Tartib raqami</th>
-                <th>O'rtacha baholash</th>
+                <th>Tartib</th>
+                <th>Davomiyligi</th>
                 <th>Izohlar</th>
+                <th>O'rtacha reyting</th>
                 <th>Amallar</th>
             </tr>
         </thead>
@@ -92,16 +122,17 @@
                 <td>{{ lesson.title }}</td>
                 <td>{{ lesson.course.title }}</td>
                 <td>{{ lesson.order }}</td>
-                <td>{{ lesson.average_rating if lesson.average_rating else "Baholanmagan" }}</td>
+                <td>{{ lesson.duration }}</td>
                 <td>{{ lesson.comments_count }}</td>
+                <td>{{ lesson.average_rating if lesson.average_rating else "Baholanmagan" }}</td>
                 <td class="table-actions">
-                    <button class="btn btn-sm btn-primary" onclick="viewLesson({{ lesson.id }})">
+                    <button class="btn btn-sm btn-primary view-lesson" data-id="{{ lesson.id }}" title="Ko'rish">
                         <i class="fas fa-eye"></i>
                     </button>
-                    <button class="btn btn-sm btn-edit" onclick="editLesson({{ lesson.id }})">
+                    <button class="btn btn-sm btn-edit edit-lesson" data-id="{{ lesson.id }}" title="Tahrirlash">
                         <i class="fas fa-edit"></i>
                     </button>
-                    <button class="btn btn-sm btn-delete" onclick="deleteLesson({{ lesson.id }})">
+                    <button class="btn btn-sm btn-delete delete-lesson" data-id="{{ lesson.id }}" title="O'chirish">
                         <i class="fas fa-trash"></i>
                     </button>
                 </td>
@@ -111,11 +142,17 @@
     </table>
     
     <div class="pagination">
-        {% for i in range(1, total_pages + 1) %}
-        <div class="pagination-item {% if i == current_page %}active{% endif %}" onclick="goToPage({{ i }})">
-            {{ i }}
-        </div>
+        {% if current_page > 1 %}
+        <a href="?page={{ current_page - 1 }}" class="pagination-item"><i class="fas fa-chevron-left"></i> Oldingi</a>
+        {% endif %}
+        
+        {% for p in range(1, total_pages + 1) %}
+        <a href="?page={{ p }}" class="pagination-item {% if p == current_page %}active{% endif %}">{{ p }}</a>
         {% endfor %}
+        
+        {% if current_page < total_pages %}
+        <a href="?page={{ current_page + 1 }}" class="pagination-item">Keyingi <i class="fas fa-chevron-right"></i></a>
+        {% endif %}
     </div>
 </div>
 {% endblock %}
