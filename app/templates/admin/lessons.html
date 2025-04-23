@@ -1,0 +1,125 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Darslar{% endblock %}
+{% block lessons_active %}active{% endblock %}
+{% block header_title %}Darslar{% endblock %}
+
+{% block content %}
+<div class="text-right mb-20">
+    <button class="btn btn-primary" onclick="showAddLessonForm()">
+        <i class="fas fa-plus"></i> Dars qo'shish
+    </button>
+</div>
+
+<div id="addLessonForm" class="form-container hidden">
+    <div class="form-title">Dars qo'shish</div>
+    <form id="lessonForm">
+        <div class="form-row">
+            <div class="form-col">
+                <div class="form-group">
+                    <label for="title">Dars nomi</label>
+                    <input type="text" id="title" name="title" required>
+                </div>
+            </div>
+            <div class="form-col">
+                <div class="form-group">
+                    <label for="course">Kurs</label>
+                    <select id="course" name="course_id" required>
+                        <option value="">Kursni tanlang</option>
+                        {% for course in courses %}
+                        <option value="{{ course.id }}">{{ course.title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="videoUrl">Video URL</label>
+            <input type="url" id="videoUrl" name="video_url" required>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-col">
+                <div class="form-group">
+                    <label for="order">Tartib raqami</label>
+                    <input type="number" id="order" name="order" min="1" value="1">
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="content">Dars mazmuni</label>
+            <textarea id="content" name="content" required></textarea>
+        </div>
+        
+        <div class="form-actions">
+            <button type="button" class="btn btn-cancel" onclick="hideAddLessonForm()">Bekor qilish</button>
+            <button type="submit" class="btn btn-primary">Saqlash</button>
+        </div>
+    </form>
+</div>
+
+<div class="table-container">
+    <div class="table-header">
+        <div class="table-title">Darslar ro'yxati</div>
+        <div class="table-filters">
+            <select id="courseFilter" onchange="filterLessons()">
+                <option value="">Barcha kurslar</option>
+                {% for course in courses %}
+                <option value="{{ course.id }}">{{ course.title }}</option>
+                {% endfor %}
+            </select>
+            <input type="text" placeholder="Qidirish..." id="lessonSearch">
+        </div>
+    </div>
+    <table class="table" id="lessonsTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Nomi</th>
+                <th>Kurs</th>
+                <th>Tartib raqami</th>
+                <th>O'rtacha baholash</th>
+                <th>Izohlar</th>
+                <th>Amallar</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for lesson in lessons %}
+            <tr>
+                <td>{{ lesson.id }}</td>
+                <td>{{ lesson.title }}</td>
+                <td>{{ lesson.course.title }}</td>
+                <td>{{ lesson.order }}</td>
+                <td>{{ lesson.average_rating if lesson.average_rating else "Baholanmagan" }}</td>
+                <td>{{ lesson.comments_count }}</td>
+                <td class="table-actions">
+                    <button class="btn btn-sm btn-primary" onclick="viewLesson({{ lesson.id }})">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                    <button class="btn btn-sm btn-edit" onclick="editLesson({{ lesson.id }})">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-delete" onclick="deleteLesson({{ lesson.id }})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div class="pagination">
+        {% for i in range(1, total_pages + 1) %}
+        <div class="pagination-item {% if i == current_page %}active{% endif %}" onclick="goToPage({{ i }})">
+            {{ i }}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/admin/js/lessons.js"></script>
+{% endblock %}

@@ -1,0 +1,314 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Izohlar{% endblock %}
+{% block comments_active %}active{% endblock %}
+{% block header_title %}Izohlar{% endblock %}
+
+{% block content %}
+<div class="table-container">
+    <div class="table-header">
+        <div class="table-title">
+            <i class="fas fa-comments"></i> Izohlar ro'yxati
+        </div>
+        <div class="table-actions-top">
+            <button class="btn btn-refresh" onclick="window.location.reload()">
+                <i class="fas fa-sync-alt"></i> Yangilash
+            </button>
+        </div>
+    </div>
+    
+    <div class="filters-container">
+        <div class="filter-item">
+            <label for="lessonFilter"><i class="fas fa-book"></i> Dars bo'yicha</label>
+            <select id="lessonFilter" class="form-select" onchange="filterComments()">
+                <option value="">Barcha darslar</option>
+                {% for lesson in lessons %}
+                <option value="{{ lesson.id }}">{{ lesson.title }} ({{ lesson.course.title }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-item">
+            <label for="commentSearch"><i class="fas fa-search"></i> Qidirish</label>
+            <input type="text" class="form-input" placeholder="Qidirish..." id="commentSearch">
+        </div>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover" id="commentsTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th><i class="fas fa-user"></i> Foydalanuvchi</th>
+                    <th><i class="fas fa-book"></i> Dars</th>
+                    <th><i class="fas fa-comment"></i> Matn</th>
+                    <th><i class="fas fa-calendar"></i> Sana</th>
+                    <th><i class="fas fa-cogs"></i> Amallar</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for comment in comments %}
+                <tr>
+                    <td>{{ comment.id }}</td>
+                    <td><strong>{{ comment.user.full_name }}</strong></td>
+                    <td>{{ comment.lesson.title }}</td>
+                    <td class="comment-text">{{ comment.text }}</td>
+                    <td>{{ comment.created_at }}</td>
+                    <td class="table-actions">
+                        <button class="btn btn-action btn-edit" onclick="editComment({{ comment.id }})" title="Tahrirlash">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="btn btn-action btn-delete" onclick="deleteComment({{ comment.id }})" title="O'chirish">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="pagination-container">
+        <div class="pagination">
+            {% if current_page > 1 %}
+            <button class="btn btn-page" onclick="goToPage({{ current_page - 1 }})">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+            {% endif %}
+            
+            {% for i in range(1, total_pages + 1) %}
+            <button class="btn btn-page {% if i == current_page %}active{% endif %}" onclick="goToPage({{ i }})">
+                {{ i }}
+            </button>
+            {% endfor %}
+            
+            {% if current_page < total_pages %}
+            <button class="btn btn-page" onclick="goToPage({{ current_page + 1 }})">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<div id="editCommentForm" class="form-container hidden">
+    <div class="form-header">
+        <div class="form-title"><i class="fas fa-edit"></i> Izohni tahrirlash</div>
+        <button type="button" class="btn btn-close" onclick="hideEditCommentForm()">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    <form id="commentForm">
+        <input type="hidden" id="commentId" name="id">
+        <div class="form-group">
+            <label for="commentText"><i class="fas fa-comment"></i> Izoh matni</label>
+            <textarea id="commentText" name="text" class="form-control" rows="5" required></textarea>
+        </div>
+        
+        <div class="form-actions">
+            <button type="button" class="btn btn-cancel" onclick="hideEditCommentForm()">
+                <i class="fas fa-times"></i> Bekor qilish
+            </button>
+            <button type="submit" class="btn btn-primary">
+                <i class="fas fa-save"></i> Saqlash
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .table-responsive {
+        overflow-x: auto;
+        margin-bottom: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        border-radius: 8px;
+    }
+    
+    .table-hover tr:hover {
+        background-color: rgba(6, 166, 126, 0.05);
+    }
+    
+    .table th {
+        background-color: #f8f9fa;
+        color: #495057;
+        font-weight: 600;
+        text-transform: uppercase;
+        font-size: 0.85rem;
+        padding: 12px 15px;
+        border-bottom: 2px solid #06A67E;
+    }
+    
+    .table td {
+        padding: 12px 15px;
+        vertical-align: middle;
+    }
+    
+    .btn-action {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 3px;
+        transition: all 0.2s ease;
+        background-color: white;
+        border: 1px solid #dee2e6;
+    }
+    
+    .btn-edit {
+        color: #007bff;
+    }
+    
+    .btn-edit:hover {
+        background-color: #007bff;
+        color: white;
+    }
+    
+    .btn-delete {
+        color: #dc3545;
+    }
+    
+    .btn-delete:hover {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    .filters-container {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 20px;
+        background-color: #f8f9fa;
+        padding: 15px;
+        border-radius: 8px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    }
+    
+    .filter-item {
+        flex: 1;
+        min-width: 200px;
+    }
+    
+    .filter-item label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+        color: #495057;
+    }
+    
+    .form-select, .form-input {
+        width: 100%;
+        padding: 8px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        font-size: 14px;
+    }
+    
+    .form-input:focus, .form-select:focus {
+        border-color: #06A67E;
+        outline: none;
+        box-shadow: 0 0 0 0.2rem rgba(6, 166, 126, 0.25);
+    }
+    
+    .table-title {
+        font-size: 1.25rem;
+        display: flex;
+        align-items: center;
+    }
+    
+    .table-title i {
+        margin-right: 8px;
+        color: #06A67E;
+    }
+    
+    .table-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+    
+    .table-actions-top {
+        display: flex;
+        gap: 10px;
+    }
+    
+    .btn-refresh {
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        color: #495057;
+        padding: 8px 15px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-refresh:hover {
+        background-color: #e2e6ea;
+    }
+    
+    .pagination-container {
+        display: flex;
+        justify-content: center;
+        margin: 20px 0;
+    }
+    
+    .pagination {
+        display: flex;
+        gap: 5px;
+    }
+    
+    .btn-page {
+        min-width: 40px;
+        height: 40px;
+        border-radius: 4px;
+        background-color: #f8f9fa;
+        border: 1px solid #dee2e6;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 500;
+        color: #495057;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-page:hover {
+        background-color: #e2e6ea;
+    }
+    
+    .btn-page.active {
+        background-color: #06A67E;
+        color: white;
+        border-color: #06A67E;
+    }
+    
+    .form-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+    }
+    
+    .btn-close {
+        background-color: transparent;
+        border: none;
+        font-size: 1.2rem;
+        color: #6c757d;
+        cursor: pointer;
+    }
+    
+    .comment-text {
+        max-width: 300px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/admin/js/comments.js"></script>
+{% endblock %}

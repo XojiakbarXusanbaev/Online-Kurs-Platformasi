@@ -1,0 +1,246 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Ro'yxatga olish{% endblock %}
+{% block enrollments_active %}active{% endblock %}
+{% block header_title %}Ro'yxatga olish{% endblock %}
+
+{% block content %}
+<div class="text-right mb-20">
+    <button class="btn btn-primary" onclick="showAddEnrollmentForm()">
+        <i class="fas fa-plus"></i> Ro'yxatga qo'shish
+    </button>
+</div>
+
+<div id="addEnrollmentForm" class="form-container hidden">
+    <div class="form-title">Kursga ro'yxatga olish</div>
+    <form id="enrollmentForm">
+        <div class="form-row">
+            <div class="form-col">
+                <div class="form-group">
+                    <label for="user">Foydalanuvchi</label>
+                    <select id="user" name="user_id" required>
+                        <option value="">Foydalanuvchini tanlang</option>
+                        {% for user in users %}
+                        <option value="{{ user.id }}">{{ user.full_name }} ({{ user.email }})</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="form-col">
+                <div class="form-group">
+                    <label for="course">Kurs</label>
+                    <select id="course" name="course_id" required>
+                        <option value="">Kursni tanlang</option>
+                        {% for course in courses %}
+                        <option value="{{ course.id }}">{{ course.title }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-actions">
+            <button type="button" class="btn btn-cancel" onclick="hideAddEnrollmentForm()">Bekor qilish</button>
+            <button type="submit" class="btn btn-primary">Saqlash</button>
+        </div>
+    </form>
+</div>
+
+<div class="table-container">
+    <div class="table-header">
+        <div class="table-title">Ro'yxatga olinganlar ro'yxati</div>
+        <div class="table-filters">
+            <select id="courseFilter" onchange="filterEnrollments()">
+                <option value="">Barcha kurslar</option>
+                {% for course in courses %}
+                <option value="{{ course.id }}" {% if filter_course_id == course.id %}selected{% endif %}>{{ course.title }}</option>
+                {% endfor %}
+            </select>
+            <select id="userFilter" onchange="filterEnrollments()">
+                <option value="">Barcha foydalanuvchilar</option>
+                {% for user in users %}
+                <option value="{{ user.id }}" {% if filter_user_id == user.id %}selected{% endif %}>{{ user.full_name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    <table class="table" id="enrollmentsTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Foydalanuvchi</th>
+                <th>Kurs</th>
+                <th>Ro'yxatga olingan sana</th>
+                <th>Amallar</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for enrollment in enrollments %}
+            <tr>
+                <td>{{ enrollment.id }}</td>
+                <td>{{ enrollment.user.full_name }}</td>
+                <td>{{ enrollment.course.title }}</td>
+                <td>{{ enrollment.enrolled_at }}</td>
+                <td class="table-actions">
+                    <button class="btn btn-sm btn-delete" onclick="deleteEnrollment({{ enrollment.id }})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div class="pagination">
+        {% for i in range(1, total_pages + 1) %}
+        <div class="pagination-item {% if i == current_page %}active{% endif %}" onclick="goToPage({{ i }})">
+            {{ i }}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Функциональность управления записями на курсы
+    document.addEventListener('DOMContentLoaded', function() {
+        // Настройка формы добавления записи
+        setupEnrollmentForm();
+    });
+
+    // Показать форму добавления записи
+    function showAddEnrollmentForm() {
+        document.getElementById('addEnrollmentForm').classList.remove('hidden');
+        // Сбросить форму
+        document.getElementById('enrollmentForm').reset();
+    }
+
+    // Скрыть форму добавления записи
+    function hideAddEnrollmentForm() {
+        document.getElementById('addEnrollmentForm').classList.add('hidden');
+    }
+
+    // Фильтрация записей
+    function filterEnrollments() {
+        const courseFilter = document.getElementById('courseFilter');
+        const userFilter = document.getElementById('userFilter');
+        const courseId = courseFilter.value;
+        const userId = userFilter.value;
+        
+        // Формируем URL с параметрами фильтрации
+        const url = new URL(window.location.href);
+        
+        // Сбрасываем существующие параметры поиска
+        url.searchParams.delete('course_id');
+        url.searchParams.delete('user_id');
+        url.searchParams.delete('page');
+        
+        // Добавляем параметры, если они указаны
+        if (courseId) {
+            url.searchParams.set('course_id', courseId);
+        }
+        if (userId) {
+            url.searchParams.set('user_id', userId);
+        }
+        
+        window.location.href = url.toString();
+    }
+
+    // Настройка формы записи
+    function setupEnrollmentForm() {
+        const enrollmentForm = document.getElementById('enrollmentForm');
+        
+        enrollmentForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Собираем данные формы
+            const formData = new FormData(enrollmentForm);
+            const enrollmentData = {
+                user_id: parseInt(formData.get('user_id')),
+                course_id: parseInt(formData.get('course_id'))
+            };
+            
+            try {
+                // Отправляем запрос на создание новой записи
+                const response = await fetch('/api/admin/enrollments', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(enrollmentData)
+                });
+                
+                if (response.ok) {
+                    showNotification('Ro\'yxatga olish muvaffaqiyatli yaratildi');
+                    // Скрыть форму
+                    hideAddEnrollmentForm();
+                    // Обновить страницу
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    const errorData = await response.json();
+                    showNotification(errorData.detail || 'Ro\'yxatga olishda xatolik yuz berdi', 'error');
+                }
+            } catch (error) {
+                console.error('API Error:', error);
+                showNotification('So\'rovni bajarishda xatolik yuz berdi', 'error');
+            }
+        });
+    }
+
+    // Удаление записи на курс
+    function deleteEnrollment(enrollmentId) {
+        if (confirm('Ushbu ro\'yxatga olishni o\'chirishni xohlaysizmi?')) {
+            fetch(`/api/admin/enrollments/${enrollmentId}`, {
+                method: 'DELETE'
+            })
+            .then(response => {
+                if (response.ok) {
+                    showNotification('Ro\'yxatga olish muvaffaqiyatli o\'chirildi');
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    return response.json().then(data => {
+                        throw new Error(data.detail || 'Ro\'yxatga olishni o\'chirishda xatolik yuz berdi');
+                    });
+                }
+            })
+            .catch(error => {
+                showNotification(error.message, 'error');
+            });
+        }
+    }
+
+    // Функция для отображения уведомлений
+    function showNotification(message, type = 'success') {
+        const notification = document.createElement('div');
+        notification.className = `notification notification-${type}`;
+        notification.textContent = message;
+        
+        document.body.appendChild(notification);
+        
+        // Показываем уведомление
+        setTimeout(() => {
+            notification.classList.add('show');
+        }, 100);
+        
+        // Скрываем и удаляем через 3 секунды
+        setTimeout(() => {
+            notification.classList.remove('show');
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 300);
+        }, 3000);
+    }
+
+    // Переход на определенную страницу пагинации
+    function goToPage(page) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('page', page);
+        window.location.href = url.toString();
+    }
+</script>
+{% endblock %}

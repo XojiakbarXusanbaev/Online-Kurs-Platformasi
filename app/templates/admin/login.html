@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FastAdmin - Вход</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/admin/css/style.css">
+    <style>
+        .error-message {
+            display: none;
+            background-color: #ffebee;
+            color: #c62828;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+        .error-message.show {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-container">
+        <div class="login-form">
+            <div class="login-logo">
+                <svg width="50" height="50" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <circle cx="25" cy="25" r="25" fill="#06A67E"/>
+                    <path d="M25 15L15 27.5H22.5L22.5 35L32.5 22.5H25L25 15Z" fill="white"/>
+                </svg>
+                <h1>FastAdmin</h1>
+            </div>
+
+            <div id="errorMessage" class="error-message">
+                Неверный email или пароль
+            </div>
+
+            <form id="loginForm">
+                <div class="form-group">
+                    <label for="username">* Email</label>
+                    <input type="email" id="username" name="username" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="password">* Пароль</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Войти</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="/static/admin/js/login.js"></script>
+</body>
+</html>

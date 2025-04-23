@@ -1,0 +1,115 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Baholashlar{% endblock %}
+{% block ratings_active %}active{% endblock %}
+{% block header_title %}Baholashlar{% endblock %}
+
+{% block content %}
+<div class="table-container">
+    <div class="table-header">
+        <div class="table-title">Baholashlar ro'yxati</div>
+        <div class="table-filters">
+            <select id="lessonFilter" onchange="filterRatings()">
+                <option value="">Barcha darslar</option>
+                {% for lesson in lessons %}
+                <option value="{{ lesson.id }}">{{ lesson.title }} ({{ lesson.course.title }})</option>
+                {% endfor %}
+            </select>
+            <select id="ratingFilter" onchange="filterRatings()">
+                <option value="">Barcha baholashlar</option>
+                <option value="5">5 yulduz</option>
+                <option value="4">4 yulduz</option>
+                <option value="3">3 yulduz</option>
+                <option value="2">2 yulduz</option>
+                <option value="1">1 yulduz</option>
+            </select>
+        </div>
+    </div>
+    <table class="table" id="ratingsTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Foydalanuvchi</th>
+                <th>Dars</th>
+                <th>Kurs</th>
+                <th>Baho</th>
+                <th>Amallar</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for rating in ratings %}
+            <tr>
+                <td>{{ rating.id }}</td>
+                <td>{{ rating.user.full_name }}</td>
+                <td>{{ rating.lesson.title }}</td>
+                <td>{{ rating.lesson.course.title }}</td>
+                <td>
+                    <div class="stars-container">
+                        {% for i in range(1, 6) %}
+                        <i class="fas fa-star {% if i <= rating.stars %}filled{% endif %}"></i>
+                        {% endfor %}
+                    </div>
+                </td>
+                <td class="table-actions">
+                    <button class="btn btn-sm btn-edit" onclick="editRating({{ rating.id }})">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-delete" onclick="deleteRating({{ rating.id }})">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div class="pagination">
+        {% for i in range(1, total_pages + 1) %}
+        <div class="pagination-item {% if i == current_page %}active{% endif %}" onclick="goToPage({{ i }})">
+            {{ i }}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<div id="editRatingForm" class="form-container hidden">
+    <div class="form-title">Bahoni tahrirlash</div>
+    <form id="ratingForm">
+        <input type="hidden" id="ratingId" name="id">
+        <div class="form-group">
+            <label for="stars">Baho</label>
+            <select id="stars" name="stars" required>
+                <option value="5">5 yulduz</option>
+                <option value="4">4 yulduz</option>
+                <option value="3">3 yulduz</option>
+                <option value="2">2 yulduz</option>
+                <option value="1">1 yulduz</option>
+            </select>
+        </div>
+        
+        <div class="form-actions">
+            <button type="button" class="btn btn-cancel" onclick="hideEditRatingForm()">Bekor qilish</button>
+            <button type="submit" class="btn btn-primary">Saqlash</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+.stars-container {
+    display: inline-flex;
+}
+.fas.fa-star {
+    color: #ddd;
+    margin-right: 2px;
+}
+.fas.fa-star.filled {
+    color: #ffc107;
+}
+</style>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/admin/js/ratings.js"></script>
+{% endblock %}

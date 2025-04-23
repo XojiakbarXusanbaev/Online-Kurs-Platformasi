@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Admin Panel{% endblock %} - Online Kurs Platformasi</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/static/admin/css/style.css">
+    <link rel="stylesheet" href="/static/admin/css/modal.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    {% block extra_head %}{% endblock %}
+    <style>
+        :root {
+            --primary-color: #06A67E;
+            --primary-light: rgba(6, 166, 126, 0.1);
+            --primary-dark: #058064;
+            --secondary-color: #4A6CF7;
+            --text-color: #333;
+            --light-text: #6c757d;
+            --danger-color: #dc3545;
+            --success-color: #198754;
+            --warning-color: #ffc107;
+            --info-color: #0dcaf0;
+            --background-color: #f8f9fa;
+            --border-color: #dee2e6;
+            --shadow-color: rgba(0, 0, 0, 0.1);
+            --card-bg: #ffffff;
+            --sidebar-width: 260px;
+            --header-height: 70px;
+            --border-radius: 8px;
+            --transition-speed: 0.3s;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        .admin-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Стили боковой панели */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--card-bg);
+            box-shadow: 2px 0 10px var(--shadow-color);
+            position: fixed;
+            height: 100%;
+            overflow-y: auto;
+            transition: all var(--transition-speed) ease;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            padding: 0;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            padding: 20px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .logo-icon {
+            margin-right: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .logo-text h1 {
+            font-size: 18px;
+            font-weight: 600;
+            margin: 0;
+            color: var(--primary-color);
+        }
+        
+        .logo-text span {
+            font-size: 12px;
+            color: var(--light-text);
+        }
+        
+        .user-profile {
+            display: flex;
+            align-items: center;
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 15px;
+        }
+        
+        .user-avatar {
+            margin-right: 12px;
+        }
+        
+        .user-avatar img {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            object-fit: cover;
+        }
+        
+        .user-details h4 {
+            font-size: 14px;
+            margin: 0;
+            font-weight: 600;
+        }
+        
+        .user-details span {
+            font-size: 12px;
+            color: var(--light-text);
+        }
+        
+        .menu {
+            padding: 0 10px;
+            flex: 1;
+            overflow-y: auto;
+        }
+        
+        .menu-category {
+            font-size: 11px;
+            text-transform: uppercase;
+            color: var(--light-text);
+            font-weight: 600;
+            margin: 20px 10px 10px;
+            letter-spacing: 0.5px;
+        }
+        
+        .menu ul {
+            list-style: none;
+            padding: 0;
+            margin: 0 0 15px 0;
+        }
+        
+        .menu-item {
+            margin-bottom: 2px;
+            border-radius: var(--border-radius);
+            transition: all var(--transition-speed) ease;
+        }
+        
+        .menu-item a {
+            display: flex;
+            align-items: center;
+            padding: 10px 15px;
+            color: var(--text-color);
+            text-decoration: none;
+            font-size: 14px;
+            border-radius: var(--border-radius);
+            transition: all var(--transition-speed) ease;
+        }
+        
+        .menu-item a i {
+            margin-right: 10px;
+            font-size: 18px;
+            min-width: 24px;
+            text-align: center;
+            color: var(--light-text);
+            transition: all var(--transition-speed) ease;
+        }
+        
+        .menu-item a span {
+            transition: all var(--transition-speed) ease;
+        }
+        
+        .menu-item:hover a {
+            background-color: var(--primary-light);
+        }
+        
+        .menu-item:hover a i, 
+        .menu-item:hover a span {
+            color: var(--primary-color);
+        }
+        
+        .menu-item.active a {
+            background-color: var(--primary-light);
+            color: var(--primary-color);
+        }
+        
+        .menu-item.active a i {
+            color: var(--primary-color);
+        }
+        
+        .sidebar-footer {
+            padding: 15px 20px;
+            border-top: 1px solid var(--border-color);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: auto;
+        }
+        
+        .version {
+            font-size: 12px;
+            color: var(--light-text);
+        }
+        
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            color: var(--danger-color);
+            text-decoration: none;
+            font-size: 13px;
+        }
+        
+        .logout-btn i {
+            margin-right: 5px;
+        }
+        
+        /* Основной контент */
+        .main-content {
+            margin-left: var(--sidebar-width);
+            width: calc(100% - var(--sidebar-width));
+            min-height: 100vh;
+            transition: all var(--transition-speed) ease;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .main-header {
+            height: var(--header-height);
+            background: var(--card-bg);
+            border-bottom: 1px solid var(--border-color);
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 99;
+            box-shadow: 0 2px 4px var(--shadow-color);
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+        
+        .sidebar-toggle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: transparent;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            margin-right: 15px;
+            color: var(--text-color);
+            transition: all var(--transition-speed) ease;
+        }
+        
+        .sidebar-toggle:hover {
+            background-color: var(--background-color);
+            color: var(--primary-color);
+        }
+        
+        .page-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin: 0;
+            color: var(--text-color);
+        }
+        
+        .header-right {
+            display: flex;
+            align-items: center;
+        }
+        
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .btn-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: transparent;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-color);
+            transition: all var(--transition-speed) ease;
+        }
+        
+        .btn-icon:hover {
+            background-color: var(--background-color);
+            color: var(--primary-color);
+        }
+        
+        .notification-bell {
+            position: relative;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-color);
+            transition: all var(--transition-speed) ease;
+        }
+        
+        .notification-bell:hover {
+            background-color: var(--background-color);
+            color: var(--primary-color);
+        }
+        
+        .badge {
+            position: absolute;
+            top: 5px;
+            right: 5px;
+            background-color: var(--danger-color);
+            color: white;
+            font-size: 10px;
+            min-width: 15px;
+            height: 15px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 4px;
+        }
+        
+        .content-wrapper {
+            flex: 1;
+            padding: 20px;
+            background-color: var(--background-color);
+            overflow-y: auto;
+        }
+        
+        .content {
+            background-color: var(--card-bg);
+            border-radius: var(--border-radius);
+            box-shadow: 0 2px 10px var(--shadow-color);
+            padding: 20px;
+            min-height: calc(100vh - var(--header-height) - 40px);
+        }
+        
+        .page-header {
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        .breadcrumbs {
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            color: var(--light-text);
+        }
+        
+        .breadcrumbs a {
+            color: var(--light-text);
+            text-decoration: none;
+            transition: color var(--transition-speed) ease;
+        }
+        
+        .breadcrumbs a:hover {
+            color: var(--primary-color);
+        }
+        
+        .divider {
+            margin: 0 8px;
+            font-size: 10px;
+        }
+        
+        /* Индикатор загрузки */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            opacity: 1;
+            transition: opacity var(--transition-speed) ease;
+        }
+        
+        .loading-overlay.loaded {
+            opacity: 0;
+        }
+        
+        .spinner-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(6, 166, 126, 0.2);
+            border-radius: 50%;
+            border-top: 4px solid var(--primary-color);
+            animation: spin 1s linear infinite;
+        }
+        
+        .loading-text {
+            margin-top: 15px;
+            font-size: 14px;
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* Сворачивание боковой панели */
+        .sidebar-collapsed .sidebar {
+            width: 70px;
+        }
+        
+        .sidebar-collapsed .main-content {
+            margin-left: 70px;
+            width: calc(100% - 70px);
+        }
+        
+        .sidebar-collapsed .logo-text,
+        .sidebar-collapsed .user-details,
+        .sidebar-collapsed .menu-item a span,
+        .sidebar-collapsed .menu-category,
+        .sidebar-collapsed .sidebar-footer .version,
+        .sidebar-collapsed .sidebar-footer .logout-btn span {
+            display: none;
+        }
+        
+        .sidebar-collapsed .user-avatar img {
+            width: 32px;
+            height: 32px;
+        }
+        
+        .sidebar-collapsed .user-profile,
+        .sidebar-collapsed .logo {
+            justify-content: center;
+            padding: 15px 0;
+        }
+        
+        .sidebar-collapsed .user-avatar {
+            margin-right: 0;
+        }
+        
+        .sidebar-collapsed .logo-icon {
+            margin-right: 0;
+        }
+        
+        .sidebar-collapsed .menu-item a {
+            justify-content: center;
+            padding: 10px;
+        }
+        
+        .sidebar-collapsed .menu-item a i {
+            margin-right: 0;
+            font-size: 20px;
+        }
+        
+        .sidebar-collapsed .sidebar-footer {
+            justify-content: center;
+            padding: 15px 0;
+        }
+        
+        /* Адаптивность для мобильных устройств */
+        @media (max-width: 768px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+            }
+            
+            .sidebar-collapsed .sidebar {
+                transform: translateX(0);
+                width: var(--sidebar-width);
+            }
+            
+            .sidebar-collapsed .main-content {
+                margin-left: 0;
+                width: 100%;
+            }
+            
+            .sidebar-collapsed .logo-text,
+            .sidebar-collapsed .user-details,
+            .sidebar-collapsed .menu-item a span,
+            .sidebar-collapsed .menu-category,
+            .sidebar-collapsed .sidebar-footer .version,
+            .sidebar-collapsed .sidebar-footer .logout-btn span {
+                display: block;
+            }
+            
+            .sidebar-collapsed .menu-item a {
+                justify-content: flex-start;
+                padding: 10px 15px;
+            }
+            
+            .sidebar-collapsed .menu-item a i {
+                margin-right: 10px;
+                font-size: 18px;
+            }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Индикатор загрузки -->
+    <div class="loading-overlay">
+        <div class="spinner-container">
+            <div class="spinner"></div>
+            <div class="loading-text">Yuklanmoqda...</div>
+        </div>
+    </div>
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo">
+                <div class="logo-icon">
+                    <svg width="40" height="40" viewBox="0 0 50 50" fill="none" xmlns="http://www.w3.org/2000/svg">
+                        <circle cx="25" cy="25" r="25" fill="var(--primary-color)"/>
+                        <path d="M25 15L15 27.5H22.5L22.5 35L32.5 22.5H25L25 15Z" fill="white"/>
+                    </svg>
+                </div>
+                <div class="logo-text">
+                    <h1>Online Kurs</h1>
+                    <span>Admin Panel</span>
+                </div>
+            </div>
+            
+            <div class="user-profile">
+                <div class="user-avatar">
+                    <img src="https://ui-avatars.com/api/?name=Admin&background=06A67E&color=fff" alt="Admin">
+                </div>
+                <div class="user-details">
+                    <h4>Admin</h4>
+                    <span>Administrator</span>
+                </div>
+            </div>
+            
+            <nav class="menu">
+                <div class="menu-category">Asosiy</div>
+                <ul>
+                    <li class="menu-item {% block dashboard_active %}{% endblock %}">
+                        <a href="/admin/dashboard">
+                            <i class="fas fa-tachometer-alt"></i>
+                            <span>Boshqaruv paneli</span>
+                        </a>
+                    </li>
+                    <li class="menu-item {% block users_active %}{% endblock %}">
+                        <a href="/admin/users">
+                            <i class="fas fa-users"></i>
+                            <span>Foydalanuvchilar</span>
+                        </a>
+                    </li>
+                </ul>
+                
+                <div class="menu-category">Kontent</div>
+                <ul>
+                    <li class="menu-item {% block courses_active %}{% endblock %}">
+                        <a href="/admin/courses">
+                            <i class="fas fa-book"></i>
+                            <span>Kurslar</span>
+                        </a>
+                    </li>
+                    <li class="menu-item {% block lessons_active %}{% endblock %}">
+                        <a href="/admin/lessons">
+                            <i class="fas fa-graduation-cap"></i>
+                            <span>Darslar</span>
+                        </a>
+                    </li>
+                </ul>
+                
+                <div class="menu-category">Qarashlar</div>
+                <ul>
+                    <li class="menu-item {% block comments_active %}{% endblock %}">
+                        <a href="/admin/comments">
+                            <i class="fas fa-comments"></i>
+                            <span>Izohlar</span>
+                        </a>
+                    </li>
+                    <li class="menu-item {% block ratings_active %}{% endblock %}">
+                        <a href="/admin/ratings">
+                            <i class="fas fa-star"></i>
+                            <span>Baholash</span>
+                        </a>
+                    </li>
+                </ul>
+                
+                <div class="menu-category">Boshqaruv</div>
+                <ul>
+                    <li class="menu-item {% block enrollments_active %}{% endblock %}">
+                        <a href="/admin/enrollments">
+                            <i class="fas fa-user-graduate"></i>
+                            <span>Ro'yxatga olish</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <div class="version">v1.0.0</div>
+                <a href="/logout" class="logout-btn">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span>Chiqish</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="main-header">
+                <div class="header-left">
+                    <button id="sidebarToggle" class="sidebar-toggle">
+                        <i class="fas fa-bars"></i>
+                    </button>
+                    <h2 class="page-title">{% block header_title %}Admin Panel{% endblock %}</h2>
+                </div>
+                <div class="header-right">
+                    <div class="header-actions">
+                        <button class="btn-icon" title="Yangilash" onclick="window.location.reload()">
+                            <i class="fas fa-sync-alt"></i>
+                        </button>
+                        <button class="btn-icon" title="Sozlamalar">
+                            <i class="fas fa-cog"></i>
+                        </button>
+                        <div class="notification-bell">
+                            <i class="fas fa-bell"></i>
+                            <span class="badge">2</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="content-wrapper">
+                <div class="content">
+                    <div class="page-header">
+                        <div class="breadcrumbs">
+                            <a href="/admin/dashboard"><i class="fas fa-home"></i></a>
+                            <i class="fas fa-chevron-right divider"></i>
+                            <span>{% block breadcrumb_title %}{{ self.header_title() }}{% endblock %}</span>
+                        </div>
+                    </div>
+                    {% block content %}{% endblock %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="/static/admin/js/admin.js"></script>
+    
+    <script>
+        // Sidebar toggle functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarToggle = document.getElementById('sidebarToggle');
+            const adminContainer = document.querySelector('.admin-container');
+            
+            sidebarToggle.addEventListener('click', function() {
+                adminContainer.classList.toggle('sidebar-collapsed');
+                localStorage.setItem('sidebarCollapsed', adminContainer.classList.contains('sidebar-collapsed'));
+            });
+            
+            // Check if sidebar was collapsed in previous session
+            if (localStorage.getItem('sidebarCollapsed') === 'true') {
+                adminContainer.classList.add('sidebar-collapsed');
+            }
+            
+            // Hide loading overlay when page is loaded
+            const loadingOverlay = document.querySelector('.loading-overlay');
+            if (loadingOverlay) {
+                loadingOverlay.classList.add('loaded');
+                setTimeout(function() {
+                    loadingOverlay.style.display = 'none';
+                }, 500);
+            }
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,136 @@
+{% extends "admin/layout.html" %}
+
+{% block title %}Курсы{% endblock %}
+{% block courses_active %}active{% endblock %}
+{% block header_title %}Курсы{% endblock %}
+
+{% block content %}
+<div class="text-right mb-20">
+    <button class="btn btn-primary" onclick="showAddCourseForm()">
+        <i class="fas fa-plus"></i> Добавить курс
+    </button>
+</div>
+
+<div id="addCourseForm" class="form-container hidden">
+    <div class="form-title">Добавить курс</div>
+    <form id="courseForm">
+        <div class="form-row">
+            <div class="form-col">
+                <div class="form-group">
+                    <label for="title">Название курса</label>
+                    <input type="text" id="title" name="title" required>
+                </div>
+            </div>
+            <div class="form-col">
+                <div class="form-group">
+                    <label for="author">Автор</label>
+                    <select id="author" name="author_id" required>
+                        <option value="">Выберите автора</option>
+                        {% for author in authors %}
+                        <option value="{{ author.id }}">{{ author.full_name }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+            </div>
+        </div>
+        
+        <div class="form-group">
+            <label for="description">Описание</label>
+            <textarea id="description" name="description" required></textarea>
+        </div>
+        
+        <div class="form-actions">
+            <button type="button" class="btn btn-cancel" onclick="hideAddCourseForm()">Отмена</button>
+            <button type="submit" class="btn btn-primary">Сохранить</button>
+        </div>
+    </form>
+</div>
+
+<div class="table-container">
+    <div class="table-header">
+        <div class="table-title">Список курсов</div>
+        <div class="table-filters">
+            <input type="text" placeholder="Поиск..." id="courseSearch">
+        </div>
+    </div>
+    <table class="table" id="coursesTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Название</th>
+                <th>Автор</th>
+                <th>Студентов</th>
+                <th>Уроков</th>
+                <th>Рейтинг</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for course in courses %}
+            <tr>
+                <td>{{ course.id }}</td>
+                <td>{{ course.title }}</td>
+                <td>{{ course.author.full_name }}</td>
+                <td>{{ course.students_count }}</td>
+                <td>{{ course.lessons_count }}</td>
+                <td>{{ course.average_rating }}</td>
+                <td class="table-actions">
+                    <button class="btn btn-sm btn-primary view-lessons" data-id="{{ course.id }}">
+                        <i class="fas fa-video"></i>
+                    </button>
+                    <button class="btn btn-sm btn-edit edit-course" data-id="{{ course.id }}">
+                        <i class="fas fa-edit"></i>
+                    </button>
+                    <button class="btn btn-sm btn-delete delete-course" data-id="{{ course.id }}">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
+    <div class="pagination">
+        {% if current_page > 1 %}
+        <a href="?page={{ current_page - 1 }}" class="pagination-item">&lt; Oldingi</a>
+        {% endif %}
+        
+        {% for p in range(1, pages + 1) %}
+        <a href="?page={{ p }}" class="pagination-item {% if p == current_page %}active{% endif %}">{{ p }}</a>
+        {% endfor %}
+        
+        {% if current_page < pages %}
+        <a href="?page={{ current_page + 1 }}" class="pagination-item">Keyingi &gt;</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="/static/admin/js/courses.js"></script>
+<script>
+    // Привязываем обработчики событий к кнопкам без использования inline onclick
+    document.addEventListener('DOMContentLoaded', function() {
+        // Просмотр уроков курса
+        document.querySelectorAll('.view-lessons').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                viewLessons(this.getAttribute('data-id'));
+            });
+        });
+        
+        // Редактирование курса
+        document.querySelectorAll('.edit-course').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                editCourse(this.getAttribute('data-id'));
+            });
+        });
+        
+        // Удаление курса
+        document.querySelectorAll('.delete-course').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                deleteCourse(this.getAttribute('data-id'));
+            });
+        });
+    });
+</script>
+{% endblock %}
